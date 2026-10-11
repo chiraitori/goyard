@@ -1,0 +1,21 @@
+services:
+  goyard:
+    image: goyard:latest
+    build: .
+    restart: unless-stopped
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      EXTERNAL_URL: ${EXTERNAL_URL:-https://api.lanyard.rest}
+      COMMAND_PREFIX: ${COMMAND_PREFIX:-.}
+      BOT_PRESENCE: ${BOT_PRESENCE:-you <3}
+      BOT_PRESENCE_TYPE: ${BOT_PRESENCE_TYPE:-3}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_FORMAT: ${LOG_FORMAT:-text}
+      MAX_SOCKETS: ${MAX_SOCKETS:-5000}
+    ports:
+      - "4001:4001"
+    volumes:
+      - goyard-data:/data
+
+volumes:
+  goyard-data:
