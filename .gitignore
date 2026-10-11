@@ -4,7 +4,7 @@
 *.dll
 *.so
 *.dylib
-goyard
+/goyard
 
 # Data & database files
 data/
