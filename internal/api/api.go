@@ -176,7 +176,7 @@ func (a *API) RegisterRoutes(mux *http.ServeMux) {
 
 func (a *API) handleRoot(w http.ResponseWriter, r *http.Request) {
 	resp := map[string]any{
-		"info":                 "Lanyard provides Discord presences as an API and WebSocket. Find out more here: https://github.com/Phineas/lanyard",
+		"info":                 "Goyard provides Discord presences as a high-performance Go API and WebSocket. Find out more here: https://github.com/chiraitori/goyard",
 		"monitored_user_count": a.manager.Count(),
 		"discord_invite":       a.cfg.DiscordInvite,
 	}
