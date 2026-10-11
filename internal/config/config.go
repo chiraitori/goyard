@@ -98,7 +98,7 @@ func Load() (*Config, error) {
 
 	extURL := os.Getenv("EXTERNAL_URL")
 	if extURL == "" {
-		extURL = "https://api.lanyard.rest"
+		extURL = "https://lanyard.chiraitori.dev"
 	}
 	extURL = strings.TrimRight(extURL, "/")
 
