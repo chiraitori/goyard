@@ -1,11 +1,13 @@
 package api
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"math/big"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -119,6 +121,19 @@ type statusRecorder struct {
 func (r *statusRecorder) WriteHeader(status int) {
 	r.status = status
 	r.ResponseWriter.WriteHeader(status)
+}
+
+func (r *statusRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if hj, ok := r.ResponseWriter.(http.Hijacker); ok {
+		return hj.Hijack()
+	}
+	return nil, nil, errors.New("underlying ResponseWriter does not support Hijack")
+}
+
+func (r *statusRecorder) Flush() {
+	if f, ok := r.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
 }
 
 func (a *API) RegisterRoutes(mux *http.ServeMux) {

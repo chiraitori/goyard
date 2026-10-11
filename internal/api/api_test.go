@@ -222,3 +222,46 @@ func TestAPIRoutes(t *testing.T) {
 		}
 	})
 }
+
+func BenchmarkGetUser(b *testing.B) {
+	_, m, _, handler := setupTestAPI(nil)
+	user := map[string]any{
+		"id":            "1001",
+		"username":      "alice",
+		"discriminator": "0",
+		"avatar":        "a_abcdef123456",
+	}
+	m.Upsert("1001", user, map[string]any{"status": "online"})
+
+	req := httptest.NewRequest("GET", "/v1/users/1001", nil)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+	}
+}
+
+func BenchmarkGetUserParallel(b *testing.B) {
+	_, m, _, handler := setupTestAPI(nil)
+	user := map[string]any{
+		"id":            "1001",
+		"username":      "alice",
+		"discriminator": "0",
+		"avatar":        "a_abcdef123456",
+	}
+	m.Upsert("1001", user, map[string]any{"status": "online"})
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	b.RunParallel(func(pb *testing.PB) {
+		req := httptest.NewRequest("GET", "/v1/users/1001", nil)
+		for pb.Next() {
+			w := httptest.NewRecorder()
+			handler.ServeHTTP(w, req)
+		}
+	})
+}
