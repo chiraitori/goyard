@@ -2,8 +2,8 @@
 
 Goyard is a lightweight, drop-in Go rewrite of [Phineas/lanyard](https://github.com/Phineas/lanyard). It monitors Discord user presences via the Discord Gateway, exposes real-time state via HTTP REST and WebSocket, persists custom user key-value data, and provides Discord bot commands for KV management.
 
-**Live Instance:** [`https://lanyard.chiraitori.dev`](https://lanyard.chiraitori.dev)  
-**WebSocket:** `wss://lanyard.chiraitori.dev/socket`
+**Live Instance:** [`https://goyard.chiraitori.dev`](https://goyard.chiraitori.dev)  
+**WebSocket:** `wss://goyard.chiraitori.dev/socket`
 
 ---
 
@@ -135,7 +135,7 @@ Environment variables (read from `.env` automatically if present):
 | `COMMAND_PREFIX` | `.` | Command prefix for bot commands |
 | `BOT_PRESENCE` | `you <3` | Bot status activity text |
 | `BOT_PRESENCE_TYPE` | `3` | Bot activity type (3 = Watching) |
-| `EXTERNAL_URL` | `https://lanyard.chiraitori.dev` | Base URL used in bot replies |
+| `EXTERNAL_URL` | `https://goyard.chiraitori.dev` | Base URL used in bot replies |
 | `DISCORD_INVITE` | *empty* | Optional invite URL shown in `/` and redirected at `/discord` |
 | `BOT_IDEMPOTENCY_ENV_KEY` | *empty* | Format `ENV=val` to restrict bot command handling to specific instances |
 | `LOG_LEVEL` | `info` | Log level (`debug`, `info`, `warn`, `error`) |
@@ -191,7 +191,7 @@ services:
     restart: unless-stopped
     environment:
       BOT_TOKEN: ${BOT_TOKEN}
-      EXTERNAL_URL: https://lanyard.chiraitori.dev
+      EXTERNAL_URL: https://goyard.chiraitori.dev
     ports:
       - "4001:4001"
     volumes:
