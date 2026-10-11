@@ -200,6 +200,20 @@ volumes:
 
 ---
 
+## Benchmarks & Performance
+
+Load tested using **k6** against all live endpoints on an AMD Ryzen 7 system with 300 concurrent VUs:
+
+| Test Scenario | Total Requests / Sessions | Throughput | Median Latency | p95 Latency | Success Rate |
+|---|---|---|---|---|---|
+| **Multi-Endpoint Stress (5,000,000 reqs)** | **5,014,047 HTTP + 1,022 WS** | **44,453 req/s** | **3.12 ms** | **18.48 ms** | **99.99%** |
+| Realtime WebSockets + REST Users | 712,337 HTTP + 339 WS | 21,514 req/s | 2.15 ms | 10.50 ms | 100.00% |
+| Monitored User Presence (`/v1/users/:id`) | 276,603 HTTP | 17,287 req/s | 2.61 ms | 3.62 ms | 100.00% |
+
+All scenarios executed against live Discord presence records with embedded zero-allocation JSON streaming.
+
+---
+
 ## License
 
 MIT License. Ported from [Phineas/lanyard](https://github.com/Phineas/lanyard).
