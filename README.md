@@ -1,166 +1,178 @@
-<div align="center">
+# Goyard
 
-# 🛥️ Goyard
-
-**A lightweight, crash-resilient Go rewrite of [Lanyard](https://github.com/Phineas/lanyard).**  
-Exposes Discord presences via a live REST API & WebSocket, provides user KV storage, and includes a Discord bot.
-
-[![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?style=flat&logo=go)](https://golang.org)
-[![Docker](https://img.shields.io/badge/Docker-scratch-2496ED?style=flat&logo=docker)](https://www.docker.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-</div>
+Goyard is a lightweight, drop-in Go rewrite of [Phineas/lanyard](https://github.com/Phineas/lanyard). It monitors Discord user presences via the Discord Gateway, exposes real-time state via HTTP REST and WebSocket, persists custom user key-value data, and provides Discord bot commands for KV management.
 
 ---
 
-## ⚡ Highlights
+## What Works With Goyard (Ecosystem Compatibility)
 
-- **100% Drop-In Compatible:** Byte-compatible JSON shapes and field ordering. Works instantly with existing client libraries (`use-lanyard`, `lanyard.py`, `go-lanyard`, React hooks) with zero code changes.
-- **Embedded Database Out-of-the-Box:** Pure Go embedded `bbolt` engine by default. Run locally or in a single container with **zero external services** needed (no Redis or Postgres required).
-- **Optional Redis Backend:** Can be built with `-tags redis` for existing Lanyard Redis clusters or shared sync setups.
-- **Ultra Lightweight:** Single ~11 MB static binary (< 20 MB container on `scratch`), idle RSS < 50 MB with thousands of monitored users.
-- **BEAM-Like Fault Tolerance:** Supervised Discord gateway client and HTTP server with panic guards on all background goroutines.
-- **Discord Avatar Quicklinks:** Built-in CDN image proxy (`/<user_id>.png`, `.gif`, `.webp`, `.jpg`, `.jpeg`).
-- **Extensions Ready:** Pluggable extension hook API in `internal/ext` to add custom HTTP routes, bot commands, or WebSocket events.
+Because Goyard maintains exact byte-for-byte JSON payload shape and WebSocket protocol compatibility, existing tools and libraries built for Lanyard work with zero modifications:
+
+### Frontend & Client Libraries
+- **[`use-lanyard`](https://github.com/alistairmcloud/use-lanyard)** — Official/popular React hook for Lanyard REST & WebSocket.
+- **[`@eggsy/vue-lanyard`](https://github.com/eggsy/vue-lanyard)** — Vue 2 & 3 composable / plugin.
+- **[`lanyard.py`](https://github.com/vbe0201/lanyard.py)** — Asynchronous Python client for Lanyard API and WebSocket.
+- **[`go-lanyard`](https://github.com/maddsua/go-lanyard)** — Go SDK client.
+- **[`lanyard-ui`](https://github.com/dustin-k/lanyard-ui)** — Visual web interfaces and widgets.
+
+### Personal Websites & Portfolios
+- **Discord Status Badges / Cards** — Real-time online/offline badges, Spotify "Listening to" cards, and active rich presence widgets on developer portfolios and personal landing pages.
+- **Dynamic Readme Widgets** — Live Discord cards and avatar proxy badges in GitHub profile READMEs using `/<user_id>.png` quicklink endpoints.
+- **VSCode / Neovim Presences** — Rich presence status display (games, editors, music, stream) embedded on personal dashboards.
 
 ---
 
-## 🔌 API & WebSocket Reference
+## Architecture & Differences from Original
 
-### REST Endpoints
+| Aspect | Original Lanyard (Elixir / OTP) | Goyard (Go 1.24+) |
+|---|---|---|
+| **Default Storage** | Redis (required) | Embedded `bbolt` (zero external dependencies) |
+| **Optional Storage** | N/A | Redis (build with `-tags redis`) |
+| **Binary Size** | Full Erlang BEAM runtime | Single static binary (~11 MB stripped) |
+| **Idle Memory** | ~100–200 MB | < 50 MB with thousands of tracked users |
+| **Guild Member Indexing** | O(n²) nested search on `GUILD_CREATE` | O(n) hash-indexed mapping |
+| **Missing `client_status`** | Worker crash | Handled cleanly with empty status |
+| **KV Write on Unmonitored User** | Crashes request | Returns `404 user_not_monitored` |
+| **Prefix Stripping** | Strips first character only | Strips entire configured `COMMAND_PREFIX` |
 
-| Method | Endpoint | Description | Auth |
+---
+
+## API & WebSocket Reference
+
+### REST API
+
+All JSON responses follow the standard envelope:
+- Success: `{"success": true, "data": ...}`
+- Error: `{"success": false, "error": {"code": "...", "message": "..."}}`
+
+| Method | Route | Description | Auth |
 |---|---|---|---|
-| `GET` | `/` | Root information & monitored user count | None |
-| `GET` | `/health` | Healthcheck status JSON | None |
-| `GET` | `/metrics` | Prometheus metrics exposition | None |
-| `GET` | `/discord` | Redirects to `DISCORD_INVITE` (if configured) | None |
-| `GET` | `/v1/users/{id}` | Pretty presence for user | None |
-| `GET` | `/v1/users/@me` | Pretty presence for API key owner | API Key |
-| `PUT` | `/v1/users/{id}/kv/{key}` | Set single KV pair (raw body) | API Key |
-| `PATCH` | `/v1/users/{id}/kv` | Atomic bulk update KV pairs (JSON object) | API Key |
-| `DELETE`| `/v1/users/{id}/kv/{key}` | Delete a KV pair | API Key |
-| `GET` | `/{user_id}.{ext}` | Proxied Discord avatar (`png`, `gif`, `webp`, `jpg`, `jpeg`) | None |
+| `GET` | `/` | Service information, monitored user count | Public |
+| `GET` | `/health` | Healthcheck status and uptime JSON | Public |
+| `GET` | `/metrics` | Prometheus metrics exposition | Public |
+| `GET` | `/discord` | 302 redirect to `DISCORD_INVITE` (if set) | Public |
+| `GET` | `/v1/users/{id}` | Pretty presence record for user | Public |
+| `GET` | `/v1/users/@me` | Pretty presence of API key owner | `Authorization: <key>` |
+| `PUT` | `/v1/users/{id}/kv/{field}` | Set single KV value (raw body, max 256 KB) | `Authorization: <key>` |
+| `PATCH` | `/v1/users/{id}/kv` | Bulk update KV pairs (JSON object, max 1 MB) | `Authorization: <key>` |
+| `DELETE`| `/v1/users/{id}/kv/{field}` | Delete a KV key | `Authorization: <key>` |
+| `GET` | `/{user_id}.{ext}` | Proxied Discord avatar (`png`, `gif`, `webp`, `jpg`, `jpeg`) | Public |
 
-> **Note on Authentication:** Pass your raw API key in the `Authorization` header directly without any prefix (`Authorization: lnyd_...`).
-
----
+> Auth note: Pass the raw API key directly in the `Authorization` header (`Authorization: lnyd_...`) without any `Bearer` prefix.
 
 ### WebSocket Protocol (`/socket`)
 
-Connect via `ws://HOST:PORT/socket` (or `wss://...`).  
-Optionally append `?compression=zlib_json` for RFC 1950 zlib-compressed binary frames.
+Connect to `ws://HOST:PORT/socket` (or `wss://...`).  
+Append `?compression=zlib_json` for RFC 1950 zlib-compressed binary frames.
 
-#### Opcodes:
-- **`op: 1` Hello (Server ➔ Client):** Sent on connection (`{"op":1,"d":{"heartbeat_interval":30000}}`).
-- **`op: 2` Initialize (Client ➔ Server):** Subscribe to users:
-  ```json
-  // Option A: Single user
-  {"op": 2, "d": {"subscribe_to_id": "123456789012345678"}}
+#### Protocol Flow:
+1. **Hello (`op 1`)** — Server sends immediately on connect:
+   ```json
+   {"op": 1, "d": {"heartbeat_interval": 30000}}
+   ```
+2. **Initialize (`op 2`)** — Client sends subscription target:
+   ```json
+   // Single user
+   {"op": 2, "d": {"subscribe_to_id": "123456789012345678"}}
 
-  // Option B: Multiple users
-  {"op": 2, "d": {"subscribe_to_ids": ["123456789012345678", "234567890123456789"]}}
+   // Multiple users
+   {"op": 2, "d": {"subscribe_to_ids": ["123456789012345678", "234567890123456789"]}}
 
-  // Option C: All monitored users
-  {"op": 2, "d": {"subscribe_to_all": true}}
-  ```
-- **`op: 0` Event (Server ➔ Client):**
-  - `t: "INIT_STATE"` — Sent immediately upon initialization.
-  - `t: "PRESENCE_UPDATE"` — Real-time live presence changes.
-- **`op: 3` Heartbeat (Client ➔ Server):** Send periodically (every 30s) to keep socket alive (idle timeout 60s).
-- **`op: 4` Unsubscribe (Client ➔ Server):** Unsubscribe from users or all (`{"op": 4, "d": {"unsubscribe_from_id": "..."}}`).
+   // All monitored users
+   {"op": 2, "d": {"subscribe_to_all": true}}
+   ```
+3. **Init State (`op 0`, `t: "INIT_STATE"`)** — Server delivers initial presence snapshot.
+4. **Presence Updates (`op 0`, `t: "PRESENCE_UPDATE"`)** — Live presence changes pushed as they occur.
+5. **Heartbeat (`op 3`)** — Client sends every 30s to maintain connection. Idle timeout is 60s.
+6. **Unsubscribe (`op 4`)** — Client can unsubscribe via `unsubscribe_from_id`, `unsubscribe_from_ids`, or `unsubscribe_from_all`.
 
 ---
 
-## 🤖 Discord Bot Commands
+## Bot Commands
 
-Prefix defaults to `.` (configurable with `COMMAND_PREFIX`):
+Command prefix defaults to `.` (`COMMAND_PREFIX`):
 
 - **`.get <key>`** — Retrieve a KV value.
-- **`.set <key> <value>`** — Set a KV value.
+- **`.set <key> <value>`** — Store a KV value.
 - **`.del <key>`** — Delete a KV key.
-- **`.kv`** — List all current keys.
-- **`.apikey`** — Generate or rotate your API key (DMs only).
-- **`.help`** — Show command reference embed.
+- **`.kv`** — List all current keys for the author.
+- **`.apikey`** — Generate or rotate API key (DMs only).
+- **`.help`** — Show command list embed.
 
-> 🛡️ **Leak Protection:** If you accidentally paste your API key in a `.set`, `.get`, or `.del` command, Goyard immediately intercepts it, purges the key, rotates it, and DMs you a replacement key.
+**API Key Leak Protection:** If a user accidentally pastes their active API key in `.set`, `.get`, or `.del` commands, Goyard suppresses the command, immediately rotates the key, sends a warning message in the channel, and DMs the replacement key to the user.
 
 ---
 
-## 🛠️ Discord Setup
+## Discord Setup
 
-1. Open the [Discord Developer Portal](https://discord.com/developers/applications) and create a new Application.
+1. Open the [Discord Developer Portal](https://discord.com/developers/applications) and create an Application.
 2. In the **Bot** tab:
-   - Click **Reset Token** and copy the token into `BOT_TOKEN`.
-   - Under **Privileged Gateway Intents**, enable:
-     - **Presence Intent**
-     - **Server Members Intent**
+   - Click **Reset Token** and copy the bot token into `BOT_TOKEN`.
+   - Enable **Privileged Gateway Intents**:
+     - **Presence Intent** (required)
+     - **Server Members Intent** (required)
 3. In **OAuth2 ➔ URL Generator**:
    - Scope: `bot`
    - Permissions: `View Channels`, `Send Messages`
-   - Open the generated URL to invite your bot to your server.
-4. Anyone whose presence you want to monitor must share a server with the bot!
+   - Invite the bot to your Discord server.
+4. Users must be in at least one mutual server with the bot to be monitored.
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
-Set via `.env` file or environment variables:
+Environment variables (read from `.env` automatically if present):
 
 | Variable | Default | Description |
 |---|---|---|
-| `BOT_TOKEN` | **Required** | Discord bot token |
+| `BOT_TOKEN` | *Required* | Discord bot token |
 | `PORT` | `4001` | HTTP listen port |
 | `DB_PATH` | `./data/goyard.db` | Embedded bbolt database path |
-| `REDIS_URL` | *empty* | Redis connection URL (when built with `-tags redis`) |
-| `COMMAND_PREFIX` | `.` | Command prefix for Discord bot |
-| `BOT_PRESENCE` | `you <3` | Bot status text |
-| `BOT_PRESENCE_TYPE` | `3` | Bot status type (0=Playing, 1=Streaming, 2=Listening, 3=Watching, 5=Competing) |
-| `EXTERNAL_URL` | `https://api.lanyard.rest` | Public base URL used in bot replies |
+| `REDIS_URL` | *empty* | Redis URL (e.g. `redis://127.0.0.1:6379`) when built with `-tags redis` |
+| `COMMAND_PREFIX` | `.` | Command prefix for bot commands |
+| `BOT_PRESENCE` | `you <3` | Bot status activity text |
+| `BOT_PRESENCE_TYPE` | `3` | Bot activity type (3 = Watching) |
+| `EXTERNAL_URL` | `https://api.lanyard.rest` | Base URL used in bot replies |
 | `DISCORD_INVITE` | *empty* | Optional invite URL shown in `/` and redirected at `/discord` |
-| `BOT_IDEMPOTENCY_ENV_KEY` | *empty* | Format `ENV=val` to run bot commands on specific instances only |
-| `LOG_LEVEL` | `info` | Log level: `debug`, `info`, `warn`, `error` |
-| `LOG_FORMAT` | `text` | Log format: `text` or `json` |
+| `BOT_IDEMPOTENCY_ENV_KEY` | *empty* | Format `ENV=val` to restrict bot command handling to specific instances |
+| `LOG_LEVEL` | `info` | Log level (`debug`, `info`, `warn`, `error`) |
+| `LOG_FORMAT` | `text` | Log format (`text` or `json`) |
 | `MAX_SOCKETS` | `5000` | Max concurrent WebSocket connections |
 
 ---
 
-## 🚀 Running Goyard
+## Build & Deployment
 
-### Build & Run from Source
+### Standalone Binary
 
 ```bash
-# Standard build (uses embedded bbolt storage)
+# Standard build with embedded bbolt storage
 go build -trimpath -ldflags="-s -w" -o goyard ./cmd/goyard
 
-# Or build with optional Redis support
+# Build with Redis support
 go build -tags redis -trimpath -ldflags="-s -w" -o goyard ./cmd/goyard
 
-# Run (picks up .env automatically)
+# Run
 ./goyard
 ```
 
 ### CLI Subcommands
 
 ```bash
-# Healthcheck (checks GET http://127.0.0.1:$PORT/health)
+# Run healthcheck
 ./goyard healthcheck
 
-# Live consistent backup of embedded bbolt database
+# Consistent live backup of bbolt database
 ./goyard backup /path/to/backup.db
 ```
 
----
-
-## 🐳 Docker Deployment
-
-### Docker CLI
+### Docker
 
 ```bash
 docker build -t goyard:latest .
 docker run -d \
   -p 4001:4001 \
-  -e BOT_TOKEN="your_bot_token_here" \
+  -e BOT_TOKEN="your_token_here" \
   -v goyard-data:/data \
   --name goyard \
   goyard:latest
@@ -188,6 +200,6 @@ volumes:
 
 ---
 
-## ⚖️ License
+## License
 
-MIT License. Designed and ported from [Phineas/lanyard](https://github.com/Phineas/lanyard).
+MIT License. Ported from [Phineas/lanyard](https://github.com/Phineas/lanyard).
