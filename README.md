@@ -9,11 +9,11 @@ Goyard is a lightweight, drop-in Go rewrite of [Phineas/lanyard](https://github.
 Because Goyard maintains exact byte-for-byte JSON payload shape and WebSocket protocol compatibility, existing tools and libraries built for Lanyard work with zero modifications:
 
 ### Frontend & Client Libraries
-- **[`use-lanyard`](https://github.com/alistairmcloud/use-lanyard)** — Official/popular React hook for Lanyard REST & WebSocket.
-- **[`@eggsy/vue-lanyard`](https://github.com/eggsy/vue-lanyard)** — Vue 2 & 3 composable / plugin.
-- **[`lanyard.py`](https://github.com/vbe0201/lanyard.py)** — Asynchronous Python client for Lanyard API and WebSocket.
-- **[`go-lanyard`](https://github.com/maddsua/go-lanyard)** — Go SDK client.
-- **[`lanyard-ui`](https://github.com/dustin-k/lanyard-ui)** — Visual web interfaces and widgets.
+- **[`alii/use-lanyard`](https://github.com/alii/use-lanyard)** — Popular React hook for Lanyard REST & WebSocket.
+- **[`barbarbar338/react-use-lanyard`](https://github.com/barbarbar338/react-use-lanyard)** — React hook library for Lanyard API.
+- **[`leonardssh/use-lanyard`](https://github.com/leonardssh/use-lanyard)** — Vue Composition API hook for Lanyard REST & WebSocket.
+- **[`barbarbar338/go-lanyard`](https://github.com/barbarbar338/go-lanyard)** — Go client library with WebSocket support.
+- **[`pxseu/lanyard-ui`](https://github.com/pxseu/lanyard-ui)** — Visual web interface for Lanyard user presence & KV data.
 
 ### Personal Websites & Portfolios
 - **Discord Status Badges / Cards** — Real-time online/offline badges, Spotify "Listening to" cards, and active rich presence widgets on developer portfolios and personal landing pages.
