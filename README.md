@@ -205,7 +205,7 @@ volumes:
 
 ## Benchmarks & Performance
 
-Load tested using **k6** against all live endpoints on an Intel core i5 12500H  system with 300 concurrent VUs:
+Load tested using **k6** against all live endpoints on an Intel core i5 12500H  with VPS run on OVH Cloud (2vCore + 4gb Ram) system with 300 concurrent VUs:
 
 | Test Scenario | Total Requests / Sessions | Throughput | Median Latency | p95 Latency | Success Rate |
 |---|---|---|---|---|---|
