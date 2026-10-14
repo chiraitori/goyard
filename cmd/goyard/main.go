@@ -30,7 +30,7 @@ func main() {
 			return
 		case "backup":
 			if len(os.Args) < 3 {
-				fmt.Fprintln(os.Stderr, "Usage: lanyard backup <dest-file>")
+				fmt.Fprintln(os.Stderr, "Usage: goyard backup <dest-file>")
 				os.Exit(1)
 			}
 			runBackup(os.Args[2])

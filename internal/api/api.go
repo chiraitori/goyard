@@ -217,7 +217,7 @@ func (a *API) handleGetUser(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	pretty, ok := a.manager.Get(id)
 	if !ok {
-		writeError(w, http.StatusNotFound, "user_not_monitored", "User is not being monitored by Lanyard")
+		writeError(w, http.StatusNotFound, "user_not_monitored", "User is not being monitored by Goyard")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -233,7 +233,7 @@ func (a *API) handleGetUserMe(w http.ResponseWriter, r *http.Request) {
 	}
 	pretty, ok := a.manager.Get(uid)
 	if !ok {
-		writeError(w, http.StatusNotFound, "user_not_monitored", "User is not being monitored by Lanyard")
+		writeError(w, http.StatusNotFound, "user_not_monitored", "User is not being monitored by Goyard")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -253,7 +253,7 @@ func (a *API) authorizeWrite(w http.ResponseWriter, r *http.Request, targetID st
 	}
 	// Check if user is monitored
 	if _, ok := a.manager.Get(authUID); !ok {
-		writeError(w, http.StatusNotFound, "user_not_monitored", "User is not being monitored by Lanyard")
+		writeError(w, http.StatusNotFound, "user_not_monitored", "User is not being monitored by Goyard")
 		return "", false
 	}
 	return authUID, true
@@ -375,7 +375,7 @@ func (a *API) handleQuicklink(w http.ResponseWriter, r *http.Request) {
 
 	prettyJSON, ok := a.manager.Get(userID)
 	if !ok {
-		writeError(w, http.StatusNotFound, "user_not_monitored", "User is not being monitored by Lanyard")
+		writeError(w, http.StatusNotFound, "user_not_monitored", "User is not being monitored by Goyard")
 		return
 	}
 

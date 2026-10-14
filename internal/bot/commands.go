@@ -156,7 +156,7 @@ func (h *Handler) handleLeak(ctx context.Context, msg Message) {
 		return
 	}
 
-	dmText := fmt.Sprintf(":repeat: **We've regenerated your api key as you used it in a K/V command.**\nYour new Lanyard API key is `%s`\n\n**ABSOLUTELY DO NOT SHARE OR POST THIS KEY ANYWHERE IT WILL ALLOW ANYONE TO MANAGE YOUR LANYARD K/V**\n*Run `%sapikey` in this DM if you need to re-generate your key*", newKey, h.cfg.CommandPrefix)
+	dmText := fmt.Sprintf(":repeat: **We've regenerated your api key as you used it in a K/V command.**\nYour new Goyard API key is `%s`\n\n**ABSOLUTELY DO NOT SHARE OR POST THIS KEY ANYWHERE IT WILL ALLOW ANYONE TO MANAGE YOUR GOYARD K/V**\n*Run `%sapikey` in this DM if you need to re-generate your key*", newKey, h.cfg.CommandPrefix)
 	_ = h.discord.SendMessage(ctx, dmChan, dmText, nil)
 }
 
@@ -266,10 +266,10 @@ func (h *Handler) handleAPIKey(ctx context.Context, msg Message) {
 		return
 	}
 
-	desc := fmt.Sprintf("**Absolutely do not share or post this key anywhere, it is a secret key that will allow anyone to manage your Lanyard K/V**\n\n**This key is not to be used in a front-end application/website**\n\nIf you are looking for the public endpoint for your data, you would use your discord user ID like so\n%s/v1/users/%s", h.cfg.ExternalURL, msg.AuthorID)
+	desc := fmt.Sprintf("**Absolutely do not share or post this key anywhere, it is a secret key that will allow anyone to manage your Goyard K/V**\n\n**This key is not to be used in a front-end application/website**\n\nIf you are looking for the public endpoint for your data, you would use your discord user ID like so\n%s/v1/users/%s", h.cfg.ExternalURL, msg.AuthorID)
 
 	embed := &discord.Embed{
-		Title:       "Lanyard API Key",
+		Title:       "Goyard API Key",
 		Description: desc,
 		Color:       0x5865F2,
 		Footer: &discord.EmbedFooter{
@@ -289,8 +289,8 @@ func (h *Handler) handleAPIKey(ctx context.Context, msg Message) {
 func (h *Handler) handleHelp(ctx context.Context, msg Message) {
 	prefix := h.cfg.CommandPrefix
 	embed := &discord.Embed{
-		Title:       "Lanyard Bot Commands",
-		Description: "Store and manage custom data on your Lanyard profile.",
+		Title:       "Goyard Bot Commands",
+		Description: "Store and manage custom data on your Goyard profile.",
 		Color:       0x5865F2,
 		Fields: []discord.EmbedField{
 			{
@@ -315,12 +315,12 @@ func (h *Handler) handleHelp(ctx context.Context, msg Message) {
 			},
 			{
 				Name:   fmt.Sprintf("`%sapikey`", prefix),
-				Value:  "Get (or regenerate) your Lanyard API key, sent via DM",
+				Value:  "Get (or regenerate) your Goyard API key, sent via DM",
 				Inline: false,
 			},
 			{
 				Name:   "Docs & Source",
-				Value:  "[API/Socket docs](https://github.com/Phineas/lanyard#readme) · [Source code](https://github.com/Phineas/lanyard)",
+				Value:  "[GitHub Source](https://github.com/chiraitori/goyard)",
 				Inline: false,
 			},
 		},
